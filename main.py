@@ -57,6 +57,20 @@ def main(stdscr):
         used_phrases.add(phrase)
         return phrase
 
+    def get_locked_index(phrase, typed):
+        words = phrase.split(' ')
+        index = 0
+        locked = 0
+        for word in words:
+            if len(typed) >= index + len(word) and ''.join(typed[index:index+len(word)]) == word:
+                locked = index + len(word)
+                if locked < len(phrase) and phrase[locked] == ' ':
+                    locked += 1
+                index = locked
+            else:
+                break
+        return locked
+
     phrase = new_phrase()
     start_time = time.time()
     line = 8
@@ -111,7 +125,8 @@ def main(stdscr):
         if key == '\x1b':
             return
         elif key in ('\b', '\x7f', '\x08'):
-            if user_input:
+            locked = get_locked_index(phrase, user_input)
+            if len(user_input) > locked:
                 user_input.pop()
         elif isinstance(key, str) and len(key) == 1 and 32 <= ord(key) <= 126:
             if len(user_input) < len(phrase):
