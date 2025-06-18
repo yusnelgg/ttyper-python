@@ -7,14 +7,31 @@ def load_phrases(path):
     with open(path, 'r') as f:
         return json.load(f)
 
-PHRASES = load_phrases('phrases/data.json')
-DURATION = 30
+def wrap_text(text, max_width):
+    words = text.split()
+    lines = []
+    current = ""
+    for word in words:
+        if len(current) + len(word) + 1 > max_width:
+            lines.append(current)
+            current = word
+        else:
+            if current:
+                current += " " + word
+            else:
+                current = word
+    if current:
+        lines.append(current)
+    return lines
 
 def calculate_wpm(text, seconds):
     words = text.strip().split()
     num_words = len(words)
     minutes = seconds / 60
     return num_words / minutes if minutes > 0 else 0
+
+PHRASES = load_phrases('phrases/data.json')
+DURATION = 30
 
 def main(stdscr):
     curses.curs_set(1)
@@ -42,11 +59,11 @@ def main(stdscr):
 
     phrase = new_phrase()
     start_time = time.time()
-    line = 5
-    col = 2
+    line = 8
+    col = 5
 
-    stdscr.addstr(0, 1, "🔥 Welcome to ttyper!")
-    stdscr.addstr(1, 1, "You can exit anytime by pressing ESC")
+    stdscr.addstr(2, 1, "🔥 Welcome to ttyper!")
+    stdscr.addstr(3, 1, "You can exit anytime by pressing ESC")
 
     while True:
         elapsed_time = time.time() - start_time
@@ -54,22 +71,36 @@ def main(stdscr):
         if time_left <= 0:
             break
 
-        stdscr.addstr(5, col, f"Time left: {int(time_left)} sec  ")
+        max_y, max_x = stdscr.getmaxyx()
+        wrapped = wrap_text(phrase, max_x - col - 2)
+        stdscr.addstr(4, 1, f"Time left: {int(time_left)} sec  ")
 
-        stdscr.move(line, col)
-        stdscr.clrtoeol()
-
-        for i, ch in enumerate(phrase):
-            if i < len(user_input):
-                if user_input[i] == ch:
-                    color = curses.color_pair(1)
+        for i, line_text in enumerate(wrapped):
+            stdscr.move(line + i, col)
+            stdscr.clrtoeol()
+            for j, ch in enumerate(line_text):
+                idx = sum(len(w) + 1 for w in phrase.split()[:sum(len(l.split()) for l in wrapped[:i])]) + j
+                if idx < len(user_input):
+                    if user_input[idx] == ch:
+                        color = curses.color_pair(1)
+                    else:
+                        color = curses.color_pair(2)
                 else:
-                    color = curses.color_pair(2)
-            else:
-                color = curses.color_pair(3)
-            stdscr.addstr(line, col + i, ch, color)
+                    color = curses.color_pair(3)
+                stdscr.addstr(line + i, col + j, ch, color)
 
-        stdscr.move(line, col + len(user_input))
+        total_lines = len(wrapped)
+        idx = len(user_input)
+        logical_line = 0
+        logical_col = 0
+        count = 0
+        for i, line_text in enumerate(wrapped):
+            if count + len(line_text) >= idx:
+                logical_line = i
+                logical_col = idx - count
+                break
+            count += len(line_text)
+        stdscr.move(line + logical_line, col + logical_col)
         stdscr.refresh()
 
         try:
