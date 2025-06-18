@@ -7,7 +7,7 @@
 ## 🚀 Features
 
 - ⌨️ Typing practice right from your terminal
-- 🧾 Long and short phrases loaded from `phrases.json`
+- 🧾 Long and short phrases loaded from `phrases/data.json`
 - 🌈 Real-time feedback with colors:
   - Green = correct
   - Red = mistake
@@ -26,4 +26,4 @@
 ## 🛠️ Usage
 
 ```bash
-python ttyper.py
+python main.py
