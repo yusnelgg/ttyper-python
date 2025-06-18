@@ -1,15 +1,13 @@
 import curses
+import json
 import random
 import time
 
-PHRASES = [
-    "knowledge is power",
-    "clean code clear mind",
-    "type fast like lightning",
-    "practice makes perfect",
-    "stay focused and keep going"
-]
+def load_phrases(path):
+    with open(path, 'r') as f:
+        return json.load(f)
 
+PHRASES = load_phrases('phrases/data.json')
 DURATION = 30
 
 def calculate_wpm(text, seconds):
@@ -31,7 +29,7 @@ def main(stdscr):
 
     used_phrases = set()
     user_input = []
-    total_typed_text = ""
+    total_typed_text = []
 
     def new_phrase():
         available = [p for p in PHRASES if p not in used_phrases]
@@ -43,15 +41,12 @@ def main(stdscr):
         return phrase
 
     phrase = new_phrase()
-
-    stdscr.addstr(0, 0, "🔥 Welcome to ttyper!")
-    stdscr.addstr(1, 0, "You can exit anytime by pressing ESC")
-    stdscr.addstr(3, 0, "Type the phrase and test your speed and accuracy:")
-
     start_time = time.time()
-
     line = 5
     col = 2
+
+    stdscr.addstr(0, 1, "🔥 Welcome to ttyper!")
+    stdscr.addstr(1, 1, "You can exit anytime by pressing ESC")
 
     while True:
         elapsed_time = time.time() - start_time
@@ -59,9 +54,7 @@ def main(stdscr):
         if time_left <= 0:
             break
 
-        stdscr.addstr(2, 0, f"Time left: {int(time_left)} sec  ")
-        # stdscr.addstr(5, 0, " " * 80)
-        # stdscr.addstr(5, 0, phrase)
+        stdscr.addstr(5, col, f"Time left: {int(time_left)} sec  ")
 
         stdscr.move(line, col)
         stdscr.clrtoeol()
@@ -93,18 +86,19 @@ def main(stdscr):
             if len(user_input) < len(phrase):
                 user_input.append(key)
 
-        if len(user_input) == len(phrase) and ''.join(user_input) == phrase:
-            total_typed_text += ''.join(user_input) + " "
+        if len(user_input) == len(phrase):
+            total_typed_text.append(''.join(user_input))
             user_input = []
             phrase = new_phrase()
 
-    wpm = calculate_wpm(total_typed_text.strip(), DURATION)
+    final_text = ' '.join(total_typed_text)
+    wpm = calculate_wpm(final_text.strip(), DURATION)
 
     stdscr.nodelay(False)
     stdscr.clear()
-    stdscr.addstr(0, 0, "⏰ Time's up!")
-    stdscr.addstr(2, 0, f"Your WPM (Words Per Minute) was: {wpm:.2f}")
-    stdscr.addstr(4, 0, "Press ESC to exit...")
+    stdscr.addstr(2, col, "⏰ Time's up!")
+    stdscr.addstr(4, col, f"Your WPM (Words Per Minute) was: {wpm:.2f}")
+    stdscr.addstr(6, col, "Press ESC to exit...")
 
     while True:
         key = stdscr.getch()
