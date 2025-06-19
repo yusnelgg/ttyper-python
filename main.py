@@ -1,7 +1,16 @@
 import curses
 import json
 import random
+import sys
+import os
 import time
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def load_phrases(path):
     with open(path, 'r') as f:
@@ -30,7 +39,7 @@ def calculate_wpm(text, seconds):
     minutes = seconds / 60
     return num_words / minutes if minutes > 0 else 0
 
-PHRASES = load_phrases('phrases/data.json')
+PHRASES = load_phrases(resource_path('phrases/data.json'))
 DURATION = 30
 
 def main(stdscr):
@@ -114,6 +123,9 @@ def main(stdscr):
                 logical_col = idx - count
                 break
             count += len(line_text)
+        if len(user_input) == len(phrase) and ''.join(user_input) != phrase:
+            logical_line = len(wrapped) - 1
+            logical_col = len(wrapped[-1])
         stdscr.move(line + logical_line, col + logical_col)
         stdscr.refresh()
 
@@ -133,9 +145,10 @@ def main(stdscr):
                 user_input.append(key)
 
         if len(user_input) == len(phrase):
-            total_typed_text.append(''.join(user_input))
-            user_input = []
-            phrase = new_phrase()
+            if ''.join(user_input) == phrase:
+                total_typed_text.append(''.join(user_input))
+                user_input = []
+                phrase = new_phrase()
 
     final_text = ' '.join(total_typed_text)
     wpm = calculate_wpm(final_text.strip(), DURATION)
