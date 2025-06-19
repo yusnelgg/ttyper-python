@@ -74,10 +74,9 @@ def main(stdscr):
             if len(typed) >= index + len(word) and ''.join(typed[index:index+len(word)]) == word:
                 locked = index + len(word)
                 if locked < len(phrase) and phrase[locked] == ' ':
-                    locked += 1
-                index = locked
-            else:
-                break
+                    if len(typed) > locked and typed[locked] == ' ':
+                        locked += 1
+            index = locked
         return locked
 
     phrase = new_phrase()
@@ -106,11 +105,14 @@ def main(stdscr):
                 if idx < len(user_input):
                     if user_input[idx] == ch:
                         color = curses.color_pair(1)
+                        display_char = ch
                     else:
                         color = curses.color_pair(2)
+                        display_char = user_input[idx] if ch == ' ' else ch
                 else:
                     color = curses.color_pair(3)
-                stdscr.addstr(line + i, col + j, ch, color)
+                    display_char = ch
+                stdscr.addstr(line + i, col + j, display_char, color)
 
         total_lines = len(wrapped)
         idx = len(user_input)
